@@ -1,6 +1,9 @@
-// ===== INPUT DATE FROM SHORTCUT =====
-let inputDate = args.shortcutParameter;
-let selectedDate = inputDate ? new Date(inputDate) : new Date();
+// ===== RECEIVE DATA FROM SHORTCUT =====
+let input = args.shortcutParameter;
+
+let selectedDate = new Date(input.date);
+let sleepSeconds = input.sleepSeconds;
+let totalSteps = input.steps;
 
 // ===== FORMAT DATE =====
 let formattedDate = selectedDate.toLocaleDateString("en-GB", {
@@ -9,54 +12,13 @@ let formattedDate = selectedDate.toLocaleDateString("en-GB", {
   year: "numeric"
 });
 
-// ===== SLEEP (Selected Date) =====
-let startOfDay = new Date(selectedDate);
-startOfDay.setHours(0,0,0,0);
+// ===== FORMAT SLEEP =====
+let hours = Math.floor(sleepSeconds / 3600);
+let minutes = Math.floor((sleepSeconds % 3600) / 60);
 
-let endOfDay = new Date(selectedDate);
-endOfDay.setHours(23,59,59,999);
+let sleepText = `${hours} hrs ${minutes} mins`;
 
-let sleepSamples = await Health.querySamples({
-  type: "sleepAnalysis",
-  startDate: startOfDay,
-  endDate: endOfDay
-});
-
-let totalSleepSeconds = 0;
-
-for (let s of sleepSamples) {
-  if (s.value === "HKCategoryValueSleepAnalysisAsleep") {
-    totalSleepSeconds += (s.endDate - s.startDate) / 1000;
-  }
-}
-
-let sleepHours = Math.floor(totalSleepSeconds / 3600);
-let sleepMinutes = Math.floor((totalSleepSeconds % 3600) / 60);
-
-let sleepText = `${sleepHours} hrs ${sleepMinutes} mins`;
-
-// ===== STEPS (Previous Day) =====
-let stepsDate = new Date(selectedDate);
-stepsDate.setDate(stepsDate.getDate() - 1);
-
-let stepsStart = new Date(stepsDate);
-stepsStart.setHours(0,0,0,0);
-
-let stepsEnd = new Date(stepsDate);
-stepsEnd.setHours(23,59,59,999);
-
-let stepSamples = await Health.queryQuantitySamples({
-  type: "stepCount",
-  startDate: stepsStart,
-  endDate: stepsEnd
-});
-
-let totalSteps = 0;
-for (let s of stepSamples) {
-  totalSteps += s.quantity;
-}
-
-// ===== RETURN RESULT =====
+// ===== RETURN CLEAN RESULT =====
 let result = {
   date: formattedDate,
   sleep: sleepText,
